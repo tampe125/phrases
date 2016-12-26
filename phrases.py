@@ -10,8 +10,13 @@ class Phrases:
         parser = argparse.ArgumentParser()
         parser.add_argument('-o', '--outfile', help='Output file')
         parser.add_argument('-w', '--words', help='Number of words for each row', default=4)
+        parser.add_argument('text', help='Original text from where we should create the phrases',
+                            type=argparse.FileType('r'))
 
-        arguments = parser.parse_args()
+        self.args = parser.parse_args()
+
+        if not self.args.outfile:
+            self.args.outfile = 'phrases.txt'
 
     def banner(self):
         print("Phrases " + self.version + " - Short story long...")
@@ -35,6 +40,33 @@ class Phrases:
         except Exception as error:
             print error
             return
+
+        while True:
+            data = self.args.text.read(1024 * 64)
+
+            if not data:
+                print "[*] EOF reached"
+                break
+
+            # Remove any newlines
+            data = data.replace("\r", "")
+            data = data.replace("\n", " ")
+
+            # Remove any extra space
+            while '  ' in data:
+                data = data.replace('  ', ' ')
+
+            longest = ''
+            i = 0
+            for char in data:
+                if i == self.args.words:
+                    break
+
+                # Let's get the longest string for the current position
+                if char == ' ':
+                    i += 1
+                else:
+                    longest += char
 
 try:
     obj = Phrases()
