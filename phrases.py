@@ -1,4 +1,5 @@
 import argparse
+import string
 from datetime import date
 
 
@@ -56,17 +57,53 @@ class Phrases:
             while '  ' in data:
                 data = data.replace('  ', ' ')
 
-            longest = ''
-            i = 0
-            for char in data:
-                if i == self.args.words:
-                    break
+            chars = list(data)
 
-                # Let's get the longest string for the current position
-                if char == ' ':
-                    i += 1
-                else:
-                    longest += char
+            # Initialise some flags that will be used during the loop
+            start = None
+            spaces = 0
+            phrase = ''
+            shouldUpper = False
+            # Start with -1 so we can immediately increment it in the loop
+            i = -1
+
+            # Ok, let's iterate over the string one char at time
+            while i < len(chars):
+                i += 1
+                cur_char = chars[i]
+
+                # Did we hit a space? If so let's
+                if cur_char == ' ':
+                    # Raise the flag to capitalize the next char
+                    shouldUpper = True
+                    spaces += 1
+
+                    if not start:
+                        start = i
+
+                    continue
+                elif cur_char not in (string.ascii_letters + string.digits):
+                    # Not a alphanum char? Let's skip it
+                    continue
+
+                # Got enough words? So let's get back to the last space we detected
+                if spaces >= self.args.words:
+                    print phrase
+
+                    # Reset all the flags for the next iteration
+                    spaces = 0
+                    phrase = ''
+                    i = start
+                    start = None
+
+                    continue
+
+                if shouldUpper:
+                    cur_char = cur_char.upper()
+                    shouldUpper = False
+
+                phrase += cur_char
+
 
 try:
     obj = Phrases()
