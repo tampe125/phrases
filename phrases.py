@@ -10,7 +10,7 @@ class Phrases:
         # Let's parse some CLI options
         parser = argparse.ArgumentParser()
         parser.add_argument('-o', '--outfile', help='Output file')
-        parser.add_argument('-w', '--words', help='Number of words for each row', default=4)
+        parser.add_argument('-w', '--words', help='Number of words for each row', default=4, type=int)
         parser.add_argument('text', help='Original text from where we should create the phrases',
                             type=argparse.FileType('r'))
 
@@ -30,7 +30,9 @@ class Phrases:
         print("===============================================================================")
 
     def checkenv(self):
-        pass
+        # Try to touch the output file. If anything goes wrong, let's make the exception bubble up
+        with open(self.args.outfile, 'ab') as handle:
+            pass
 
     def run(self):
         self.banner()
@@ -39,16 +41,28 @@ class Phrases:
         try:
             self.checkenv()
         except Exception as error:
-            print error
+            print '[!]' + error.message
             return
 
         previous_data = ''
+        output_handle = open(self.args.outfile, 'ab')
+        out_buffer = []
+        read = 0
 
         while True:
+            read += 64
             data = self.args.text.read(1024 * 64)
+
+            print "[*] Read %d Kb" % read
 
             if not data:
                 print "[*] EOF reached"
+
+                if len(out_buffer):
+                    output_handle.write('\n'.join(out_buffer))
+
+                output_handle.close()
+
                 break
 
             # Remove any newlines
@@ -91,7 +105,11 @@ class Phrases:
 
                 # Got enough words? So let's get back to the last space we detected
                 if spaces >= self.args.words:
-                    print phrase
+                    out_buffer.append(phrase)
+
+                    if len(out_buffer) >= 500:
+                        output_handle.write('\n'.join(out_buffer))
+                        out_buffer = []
 
                     # Reset all the flags for the next iteration
                     spaces = 0
