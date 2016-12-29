@@ -42,6 +42,8 @@ class Phrases:
             print error
             return
 
+        previous_data = ''
+
         while True:
             data = self.args.text.read(1024 * 64)
 
@@ -57,31 +59,32 @@ class Phrases:
             while '  ' in data:
                 data = data.replace('  ', ' ')
 
+            # Do I have any leftover from previous iterations?
+            if previous_data:
+                data = previous_data + data
+                previous_data = ''
+
             chars = list(data)
 
             # Initialise some flags that will be used during the loop
             start = None
             spaces = 0
             phrase = ''
-            shouldUpper = False
-            # Start with -1 so we can immediately increment it in the loop
-            i = -1
+            i = 0
 
             # Ok, let's iterate over the string one char at time
             while i < len(chars):
-                i += 1
                 cur_char = chars[i]
+                i += 1
 
                 # Did we hit a space? If so let's
                 if cur_char == ' ':
-                    # Raise the flag to capitalize the next char
-                    shouldUpper = True
                     spaces += 1
 
+                    # If I don't have a "start" mark, let's save it now
                     if not start:
                         start = i
 
-                    continue
                 elif cur_char not in (string.ascii_letters + string.digits):
                     # Not a alphanum char? Let's skip it
                     continue
@@ -98,11 +101,10 @@ class Phrases:
 
                     continue
 
-                if shouldUpper:
-                    cur_char = cur_char.upper()
-                    shouldUpper = False
-
                 phrase += cur_char
+
+            if phrase:
+                previous_data = phrase
 
 
 try:
